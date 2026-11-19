@@ -72,7 +72,7 @@ class BertClassifier(nn.Module):
       max  —— 逐维取最大（抓最显著特征，噪声也大）
     """
 
-    def __init__(self, model_dir, num_labels=15, pool="cls", dropout=0.1):
+    def __init__(self, model_dir, num_labels=30, pool="cls", dropout=0.1):
         super().__init__()
         from transformers import AutoModel
         self.bert = AutoModel.from_pretrained(str(model_dir))
@@ -256,7 +256,7 @@ def main():
             sched.step()
             running += loss.item()
             n_step += 1
-            if i % 200 == 0:
+            if i % 20 == 0:
                 print(f"  epoch {epoch} step {i}/{steps_per_epoch} loss={loss.item():.4f}", flush=True)
             if args.max_steps and n_step >= args.max_steps:
                 break

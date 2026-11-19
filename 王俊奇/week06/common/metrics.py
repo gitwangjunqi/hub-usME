@@ -17,7 +17,7 @@
 import numpy as np
 
 
-def classification_report(y_true, y_pred, num_classes=15):
+def classification_report(y_true, y_pred, num_classes=30):
     """
     返回统一口径的指标字典。
 
@@ -87,7 +87,7 @@ def expected_calibration_error(y_true, probs, n_bins=10):
     return round(float(ece), 4)
 
 
-def pred_distribution(preds, num_classes=15):
+def pred_distribution(preds, num_classes=30):
     """预测分布：LLM zero-shot 塌缩到少数几类时，一眼就能看出来"""
     counts = {}
     for p in preds:

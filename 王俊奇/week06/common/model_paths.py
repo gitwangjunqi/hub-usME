@@ -13,7 +13,7 @@
 
 from pathlib import Path
 
-QWEN_DIR = "Qwen3-0.6B"
+QWEN_DIR = "models--Qwen--Qwen2.5-0.5B-Instruct"
 BERT_DIR = "bert-base-chinese"
 PRETRAIN = "pretrain_models"
 
@@ -28,29 +28,44 @@ def _has_weights(p: Path) -> bool:
 
 def resolve(dir_name: str, extra_roots=None) -> Path:
     """
-    从当前文件向上逐级找 pretrain_models/<dir_name>。
-    找不到就抛错并列出尝试过的路径——**不静默回退到联网下载**，保证断网也能用。
+    候选来源：
+      - extra_roots（如 F:/models/hub）下的 models--<dir_name>
+      - 项目树里的 pretrain_models/<dir_name>
+    Hub 缓存要下钻到 snapshots/<commit>/，返回那个真正含 config.json 的目录。
     """
     here = Path(__file__).resolve()
     candidates = []
     for root in (extra_roots or []):
         root = Path(root)
-        candidates.append(root if root.name == dir_name else root / dir_name)
+        candidates.extend([
+            root / f"models--{dir_name}",
+            root / dir_name,
+        ])
     for parent in here.parents:
         candidates.append(parent / PRETRAIN / dir_name)
+
     for c in candidates:
+        if not c.is_dir():
+            continue
+        # Hub 缓存：取 snapshots 下最新的一个含权重的版本
+        snap_root = c / "snapshots"
+        if snap_root.is_dir():
+            for snap in sorted(snap_root.iterdir(), reverse=True):
+                if _has_weights(snap):
+                    return snap
         if _has_weights(c):
             return c
+
     tried = "\n  ".join(str(c) for c in candidates)
     raise FileNotFoundError(f"未找到本地模型 {dir_name}，尝试过：\n  {tried}")
 
 
 def qwen3_path() -> Path:
-    return resolve(QWEN_DIR)
+    return resolve(QWEN_DIR, extra_roots=[r"F:\models\hub"])
 
 
 def bert_path() -> Path:
-    return resolve(BERT_DIR)
+    return resolve(BERT_DIR, extra_roots=[r"F:\models\hub"])
 
 
 if __name__ == "__main__":
